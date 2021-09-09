@@ -16,6 +16,13 @@ def fetchWeeklyReport(gamerTag, platform):
    res = conn.getresponse()
    data = res.read()
    json_dictionary = json.loads(data.decode("utf-8"))
+
+   # Error Handling
+   if ("error" in json_dictionary):
+      print("Error fetching stats")
+      if ("message" in json_dictionary):
+         print(json_dictionary["message"])
+
    if "wz" in json_dictionary:
       if "mode" in json_dictionary["wz"]:
          for mode in json_dictionary["wz"]["mode"].keys():
@@ -50,6 +57,5 @@ def main():
    # fetch stats from the last 7 days and display it
    fetchWeeklyReport("chiraag926", "psn")
    return
-
 if __name__ == "__main__":
    main()
