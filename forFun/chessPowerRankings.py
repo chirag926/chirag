@@ -125,9 +125,7 @@ def process_stats_for_users(usernames, today):
         }
     return results
 
-
 def generate_html_report(today, stats, filename="DailyChessPowerRankings.html"):
-    # Convert stats dictionary into a sorted list
     sorted_stats = sorted(stats.items(), key=lambda x: (-x[1]['win_percentage'], -(x[1]['wins'] + x[1]['losses'] + x[1]['draws'])))
 
     html_content = f"""
@@ -138,64 +136,53 @@ def generate_html_report(today, stats, filename="DailyChessPowerRankings.html"):
             body {{
                 font-family: Arial, sans-serif;
                 margin: 20px;
-                background-color: #F5DEB3; /* Light Beige */
-                color: #000000; /* Black text */
+                background-color: #E3F2FD; /* Light Blue */
+                color: #0D47A1; /* Dark Blue */
             }}
             h2 {{
-                color: #DAA520; /* Gold */
-            }}
-            h3 {{
-                color: #6F4E37; /* Dark Brown */
-            }}
-            h4 {{
-                color: #8B4513; /* Saddle Brown */
+                color: #0D47A1; /* Deep Dark Blue */
             }}
             table {{
-                width: 50%; /* Shortened width */
+                width: 50%;
                 border-collapse: collapse;
                 margin: 20px 0;
-                background: #ffffff; /* White */
+                background: #FFFFFF; /* White */
                 border-radius: 10px;
                 overflow: hidden;
                 box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
             }}
             th, td {{
-                border: 1px solid #6F4E37; /* Dark Brown Borders */
-                padding: 8px; /* Reduced padding for compactness */
-                text-align: left; /* Left-align all text */
+                border: 1px solid #1976D2; /* Medium Blue Borders */
+                padding: 8px;
+                text-align: left;
                 word-wrap: break-word;
                 white-space: normal;
             }}
             th {{
-                background-color: #DAA520; /* Gold Header */
+                background-color: #1976D2; /* Medium Blue */
                 color: white;
             }}
             tr:nth-child(even) {{
-                background-color: #D2B48C; /* Tan for alternating rows */
+                background-color: #BBDEFB; /* Lighter Blue */
             }}
             tr:nth-child(odd) {{
-                background-color: #F5DEB3; /* Beige */
+                background-color: #FFFFFF; /* White */
             }}
             tr:hover {{
-                background-color: #FFD700; /* Light Gold hover effect */
+                background-color: #64B5F6; /* Hover Light Blue */
                 transition: 0.3s;
             }}
-            p {{
+            .highlight {{
+                background-color: #1565C0; /* Darker Blue */
+                color: white;
                 font-weight: bold;
-                color: #8B0000; /* Dark Red */
-            }}
-            .formula {{
-                font-size: 14px;
-                font-style: italic;
-                color: #333;
-                margin-top: -10px;
             }}
         </style>
     </head>
     <body>
         <h2>Daily Chess Power Rankings</h2>
-        <p><strong>NOTE:</strong>Power Rankings are based off Win % of this week. The stats collected from {today} and are for Daily games only.</p>
-        <p class="formula">Win % = [(Wins + (0.5 * Draws)) / Total Games] * 100</p>
+        <p><strong>NOTE: Power Rankings are based off Win % of this week.</strong></p>
+        <p><strong>Stats collected from {today} and are for Daily games only.</strong></p>
     """
 
     for rank, (username, stat) in enumerate(sorted_stats, start=1):
@@ -218,28 +205,11 @@ def generate_html_report(today, stats, filename="DailyChessPowerRankings.html"):
                 <td>{stat['losses']}</td>
                 <td>{stat['draws']}</td>
                 <td>{stat['wins'] + stat['losses'] + stat['draws']}</td>
-                <td>{overall_win_percentage}%</td>
-                <td>{stat['overall_rating']}</td>
+                <td class="highlight">{overall_win_percentage}%</td>
+                <td class="highlight">{stat['overall_rating']}</td>
             </tr>
         </table>
         """
-
-        # Table for win percentage against each opponent
-        html_content += """
-        <h4>Win Percentage Against Each Opponent</h4>
-        <table>
-            <tr>
-                <th>Opponent</th><th>Win %</th>
-            </tr>
-        """
-        for opponent, win_percent in stat['opponent_win_percentage'].items():
-            html_content += f"""
-            <tr>
-                <td>{opponent}</td>
-                <td>{strip_trailing_zeros(win_percent)}%</td>
-            </tr>
-            """
-        html_content += "</table>"
 
     html_content += """
     </body>
@@ -249,12 +219,14 @@ def generate_html_report(today, stats, filename="DailyChessPowerRankings.html"):
         file.write(html_content)
     print(f"HTML report generated: {filename}")
 
-def send_email(receiver_emails, filename="ChessPowerRankings.html"):
+
+
+def send_email(receiver_emails, filename="DailyChessPowerRankings.html"):
     # Email configuration
     smtp_server = "smtp.gmail.com"
     smtp_port = 465
     sender_email = "cajhtov69@gmail.com"
-    password = "vepspiahxnkencjj"  # Use an app password if you have 2FA enabled
+    password = "smbxqtyymbfibdgl"  # Use an app password if you have 2FA enabled
 
     # Create the email
     subject = "Daily Chess Power Rankings"
@@ -297,7 +269,8 @@ def send_email(receiver_emails, filename="ChessPowerRankings.html"):
 if __name__ == "__main__":
     usernames = ["philthybhakta", "chiraag926", "mifflinj", "swenkyorc69", "jamieselects"]
     # email_list = ["chiragamin@hotmail.com", "j.hosea92@gmail.com", "jamesgbarnes13@gmail.com"]
+    email_list = ["chiragamin@hotmail.com", "j.hosea92@gmail.com"]
     adjust_today = datetime.today() - timedelta(hours=12)
     stats = process_stats_for_users(usernames, adjust_today)
     generate_html_report(adjust_today.strftime("%m/%d/%Y %H:%M %p"), stats)
-    # send_email(email_list)
+    send_email(email_list)
