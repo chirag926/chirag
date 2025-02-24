@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import sys
 import subprocess
 import json
 from datetime import datetime, timedelta
@@ -221,12 +222,11 @@ def generate_html_report(today, stats, filename="DailyChessPowerRankings.html"):
 
 
 
-def send_email(receiver_emails, filename="DailyChessPowerRankings.html"):
+def send_email(receiver_emails, app_password, filename="DailyChessPowerRankings.html"):
     # Email configuration
     smtp_server = "smtp.gmail.com"
     smtp_port = 465
     sender_email = "cajhtov69@gmail.com"
-    password = "smbxqtyymbfibdgl"  # Use an app password if you have 2FA enabled
 
     # Create the email
     subject = "Daily Chess Power Rankings"
@@ -256,7 +256,7 @@ def send_email(receiver_emails, filename="DailyChessPowerRankings.html"):
         # Send the email
         context = ssl.create_default_context()
         with smtplib.SMTP_SSL(smtp_server, smtp_port, context=context) as server:
-            server.login(sender_email, password)
+            server.login(sender_email, app_password)
             server.sendmail(sender_email, receiver_emails, message.as_string())
         
         print("Email with HTML attachment sent successfully!")
@@ -267,10 +267,16 @@ def send_email(receiver_emails, filename="DailyChessPowerRankings.html"):
         print(f"Error: {e}")
 
 if __name__ == "__main__":
+    argument_length = len(sys.argv)
+    if argument_length != 2:
+        print("Invalid number of arguments: " + str(argument_length))
+        exit(1)
+    app_password = sys.argv[1]
     usernames = ["philthybhakta", "chiraag926", "mifflinj", "swenkyorc69", "jamieselects"]
-    # email_list = ["chiragamin@hotmail.com", "j.hosea92@gmail.com", "jamesgbarnes13@gmail.com"]
+    # email_list = ["philipbhakta@gmail.com", "jor.mifflin@gmail.com", "chiragamin@hotmail.com", "j.hosea92@gmail.com", "jamesgbarnes13@gmail.com"]
     email_list = ["chiragamin@hotmail.com", "j.hosea92@gmail.com"]
     adjust_today = datetime.today() - timedelta(hours=12)
     stats = process_stats_for_users(usernames, adjust_today)
     generate_html_report(adjust_today.strftime("%m/%d/%Y %H:%M %p"), stats)
-    send_email(email_list)
+    send_email(email_list, app_password)
+    exit(0)
