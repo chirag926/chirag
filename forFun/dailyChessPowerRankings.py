@@ -11,7 +11,10 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.base import MIMEBase
 from email import encoders
 
+# Refer to https://www.chess.com/news/view/published-data-api for API details
+
 def execute_curl_command(url, params=None):
+    # Function to execute a CURL API
     cmd = ["curl", "-G", url]
     if params:
         for key, value in params.items():
@@ -25,11 +28,13 @@ def execute_curl_command(url, params=None):
         return None
 
 def fetch_player_daily_games_of_month(username, month, year):
+    # Fetch the Daily chess completed games for a given month
     url = f"https://api.chess.com/pub/player/{username}/games/{year}/{month:02d}"
     response = execute_curl_command(url)
     return [game for game in response.get('games', []) if game['time_class'] == 'daily']
 
 def fetch_player_daily_stats(username):
+    # Fetch the Daily chess stats for a given player
     url = f"https://api.chess.com/pub/player/{username}/stats"
     response = execute_curl_command(url)
     daily_rating = 0
@@ -52,6 +57,7 @@ def fetch_player_daily_stats(username):
     return daily_rating, daily_wins, daily_draws, daily_losses
 
 def calculate_win_percentage(wins, draws, total_games):
+    # Forumula for Win Percentage is (Wins + (.5 * Draws)) / Total Games
     return ((wins + 0.5 * draws) / total_games) * 100 if total_games else 0
 
 def append_games_in_week_range(username, start_of_week, end_of_week, week_games):
@@ -64,7 +70,9 @@ def append_games_in_week_range(username, start_of_week, end_of_week, week_games)
 
 def process_stats_for_users(usernames, today):
     results = {}
+    # Calculate the start/end dates for the past 7 days from "today"
     start_of_this_week, end_of_this_week = today - timedelta(weeks=1), today
+    # Calculate the start/end dates for the past 7 prior a week from "today"
     start_of_last_week, end_of_last_week = today - timedelta(weeks=2), start_of_this_week
     
     for username in usernames:
@@ -72,12 +80,16 @@ def process_stats_for_users(usernames, today):
 
         # Fetch overall daily rating and record
         overall_rating, overall_wins, overall_draws, overall_losses = fetch_player_daily_stats(username)
+        # Calculate the overall win percentage
         overall_win_percentage = calculate_win_percentage(overall_wins, overall_draws, (overall_wins + overall_draws + overall_losses))
 
+        # Fetch games for our given time range
         current_week_games, last_week_games = [], []
         append_games_in_week_range(username, start_of_this_week, end_of_this_week, current_week_games)
         append_games_in_week_range(username, start_of_last_week, end_of_last_week, last_week_games)
-        
+
+        # Define a function to fetch the W-D-L from the list of games
+        # You can pass in an opponent to fetch the W-D-L from a given "opponent"
         def count_results(games, opponent=None):
             wins, draws, losses = 0, 0, 0
             for game in games:
@@ -94,7 +106,7 @@ def process_stats_for_users(usernames, today):
                     result = game[color]['result']
                 else:
                     continue
-
+                # Account for the various game codes
                 if result == 'win': wins += 1
                 elif result in ['checkmated', 'timeout', 'resigned', 'lose']: losses += 1
                 elif result in ['agreed', 'repetition', 'stalemate']: draws += 1
@@ -102,7 +114,8 @@ def process_stats_for_users(usernames, today):
         
         curr_wins, curr_draws, curr_losses = count_results(current_week_games)
         last_wins, last_draws, last_losses = count_results(last_week_games)
-        
+
+        # Get the win percentages
         curr_win_percentage = calculate_win_percentage(curr_wins, curr_draws, len(current_week_games))
         last_win_percentage = calculate_win_percentage(last_wins, last_draws, len(last_week_games))
 
@@ -114,6 +127,7 @@ def process_stats_for_users(usernames, today):
                 opponent_curr_wins, opponent_curr_draws, opponent_curr_losses = count_results(current_week_games, opponent)
                 opponent_win_percentage[opponent] = calculate_win_percentage(opponent_curr_wins, opponent_curr_draws, len(current_week_games))
 
+        # Add the player stats to our dictionary
         results[username] = {
             "overall_rating": overall_rating,
             "overall_win_percentage": overall_win_percentage,
@@ -250,7 +264,7 @@ def send_email(receiver_emails, app_password, filename="DailyChessPowerRankings.
             "Content-Disposition",
             f"attachment; filename={filename}",
         )
-        
+
         message.attach(part)
 
         # Send the email
@@ -258,7 +272,6 @@ def send_email(receiver_emails, app_password, filename="DailyChessPowerRankings.
         with smtplib.SMTP_SSL(smtp_server, smtp_port, context=context) as server:
             server.login(sender_email, app_password)
             server.sendmail(sender_email, receiver_emails, message.as_string())
-        
         print("Email with HTML attachment sent successfully!")
 
     except FileNotFoundError:
@@ -271,12 +284,21 @@ if __name__ == "__main__":
     if argument_length != 2:
         print("Invalid number of arguments: " + str(argument_length))
         exit(1)
+
+    # To use the Gmail feature, we use an Google App Password for verification
     app_password = sys.argv[1]
+    # Define which players we want to fetch stats for
     usernames = ["philthybhakta", "chiraag926", "mifflinj", "swenkyorc69", "jamieselects"]
-    # email_list = ["philipbhakta@gmail.com", "jor.mifflin@gmail.com", "chiragamin@hotmail.com", "j.hosea92@gmail.com", "jamesgbarnes13@gmail.com"]
-    email_list = ["chiragamin@hotmail.com", "j.hosea92@gmail.com"]
+    # Define who will be in the email list
+    email_list = ["philipbhakta@gmail.com", "jor.mifflin@gmail.com", "chiragamin@hotmail.com", "j.hosea92@gmail.com", "jamesgbarnes13@gmail.com"]
+    # Choose the start day for when you want to fetch the stats
+    # We use today's date - 12 hours because Chess.com updates their
+    # servers every 12 hours.
     adjust_today = datetime.today() - timedelta(hours=12)
+    # Fetch stats for given users
     stats = process_stats_for_users(usernames, adjust_today)
+    # Generate an HTML file for the report
     generate_html_report(adjust_today.strftime("%m/%d/%Y %H:%M %p"), stats)
+    # Send the HTML file to the list of emails
     send_email(email_list, app_password)
     exit(0)
