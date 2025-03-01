@@ -151,52 +151,36 @@ def generate_html_report(today, stats, filename="DailyChessPowerRankings.html"):
             body {{
                 font-family: Arial, sans-serif;
                 margin: 20px;
-                background-color: #E3F2FD; /* Light Blue */
-                color: #0D47A1; /* Dark Blue */
+                background-color: #E3F2FD;
+                color: #0D47A1;
             }}
-            h2 {{
-                color: #0D47A1; /* Deep Dark Blue */
-            }}
+            h2 {{ color: #0D47A1; }}
             table {{
                 width: 50%;
                 border-collapse: collapse;
                 margin: 20px 0;
-                background: #FFFFFF; /* White */
+                background: #FFFFFF;
                 border-radius: 10px;
                 overflow: hidden;
                 box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
             }}
             th, td {{
-                border: 1px solid #1976D2; /* Medium Blue Borders */
+                border: 1px solid #1976D2;
                 padding: 8px;
                 text-align: left;
                 word-wrap: break-word;
                 white-space: normal;
             }}
-            th {{
-                background-color: #1976D2; /* Medium Blue */
-                color: white;
-            }}
-            tr:nth-child(even) {{
-                background-color: #BBDEFB; /* Lighter Blue */
-            }}
-            tr:nth-child(odd) {{
-                background-color: #FFFFFF; /* White */
-            }}
-            tr:hover {{
-                background-color: #64B5F6; /* Hover Light Blue */
-                transition: 0.3s;
-            }}
-            .highlight {{
-                background-color: #1565C0; /* Darker Blue */
-                color: white;
-                font-weight: bold;
-            }}
+            th {{ background-color: #1976D2; color: white; }}
+            tr:nth-child(even) {{ background-color: #BBDEFB; }}
+            tr:nth-child(odd) {{ background-color: #FFFFFF; }}
+            tr:hover {{ background-color: #64B5F6; transition: 0.3s; }}
+            .highlight {{ background-color: #1565C0; color: white; font-weight: bold; }}
         </style>
     </head>
     <body>
         <h2>Daily Chess Power Rankings</h2>
-        <p><strong>NOTE: Power Rankings are based off Win % of this week.</strong></p>
+        <p><strong>NOTE: Power Rankings are based on Win % of this week.</strong></p>
         <p><strong>Stats collected from {today} and are for Daily games only.</strong></p>
     """
 
@@ -224,15 +208,31 @@ def generate_html_report(today, stats, filename="DailyChessPowerRankings.html"):
                 <td class="highlight">{stat['overall_rating']}</td>
             </tr>
         </table>
+
+        <h4>Win % Against Specific Opponents</h4>
+        <table>
+            <tr>
+                <th>Opponent</th><th>Win %</th>
+            </tr>
         """
+        
+        for opponent, opp_win_percentage in stat['opponent_win_percentage'].items():
+            opp_win_percentage = strip_trailing_zeros(opp_win_percentage)
+            html_content += f"""
+            <tr>
+                <td>{opponent}</td>
+                <td>{opp_win_percentage}%</td>
+            </tr>
+            """
 
-    html_content += """
-    </body>
-    </html>"""
-
+        html_content += "</table>"
+    
+    html_content += "</body></html>"
+    
     with open(filename, "w") as file:
         file.write(html_content)
     print(f"HTML report generated: {filename}")
+
 
 
 
